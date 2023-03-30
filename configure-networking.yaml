@@ -1,0 +1,115 @@
+- name: Set up networking
+  hosts: localhost
+  tasks: 
+    - name: Allow HTTP traffic
+      gcp_compute_firewall:
+          name: default
+          allowed:
+          - ip_protocol: tcp
+            ports:
+            - '80'
+          source_ranges: ['0.0.0.0/0']
+          project: "{{ project }}"
+          auth_kind: serviceaccount
+          service_account_file: "{{ service_account_file }}"
+          state: present
+
+    - name: Debug
+      debug: 
+        msg: "{{web_server_two_result.selfLink}}"
+
+    - name: create a instance group
+      google.cloud.gcp_compute_instance_group:
+        name: instancegroup-backendservice
+        instances: 
+          - "{{ web_server_one_result }}"
+          - "{{ web_server_two_result }}"
+        named_ports:
+          - name: http
+            port: 80
+        zone: "{{ zone }}"
+        project: "{{ project }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ service_account_file }}"
+        state: present
+      register: instancegroup
+
+    - name: create a HTTP health check
+      google.cloud.gcp_compute_http_health_check:
+        name: httphealthcheck-backendservice
+        healthy_threshold: 10
+        port: 80
+        timeout_sec: 2
+        unhealthy_threshold: 5
+        request_path: "/up"
+        project: "{{ project }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ service_account_file }}"
+        state: present
+      register: healthcheck
+
+    - name: create a backend service
+      google.cloud.gcp_compute_backend_service:
+        name: backendservice-globalforwardingrule
+        backends:
+        - group: "{{ instancegroup.selfLink }}"
+        health_checks:
+        - "{{ healthcheck.selfLink }}"
+        enable_cdn: 'true'
+        project: "{{ project }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ service_account_file }}"
+        state: present
+      register: backendservice
+
+
+    - name: create a URL map
+      google.cloud.gcp_compute_url_map:
+        name: urlmap-globalforwardingrule
+        default_service: "{{ backendservice }}"
+        project: "{{ project }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ service_account_file }}"
+        state: present
+      register: urlmap
+
+    - name: create a target HTTP proxy
+      google.cloud.gcp_compute_target_http_proxy:
+        name: targethttpproxy-globalforwardingrule
+        url_map: "{{ urlmap }}"
+        project: "{{ project }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ service_account_file }}"
+        state: present
+      register: httpproxy
+
+    - name: create a global address
+      google.cloud.gcp_compute_global_address:
+        name: globaladdress-globalforwardingrule
+        project: "{{ project }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ service_account_file }}"
+        state: present
+      register: globaladdress
+
+    - name: create a global forwarding rule
+      google.cloud.gcp_compute_global_forwarding_rule:
+        name: localbalancer1
+        ip_address: "{{ globaladdress.address }}"
+        ip_protocol: TCP
+        port_range: 80-80
+        target: "{{ httpproxy.selfLink }}"
+        project: "{{ project }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ service_account_file }}"
+        state: present
+      ignore_errors: yes
+
+
+    # - name: Send notificatoin email
+    #   mail:
+    #     host: smtp.gmail.com
+    #     port: 465
+    #     username: cheremisin.srg@gmail.com
+    #     to: Cheremisin Sergey
+    #     subject: Ansible Job completed

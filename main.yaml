@@ -1,0 +1,3 @@
+- include: deploy-gcp-instances.yaml
+- include: configure-applications.yaml
+- include: configure-networking.yaml

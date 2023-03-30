@@ -1,0 +1,20 @@
+- name: Create IP address
+  hosts: localhost
+  gather_facts: no
+  tasks:
+   - gce:
+        instance_names: my-test-instance1
+        zone: us-central1-a
+        machine_type: n1-standard-1
+        image_family: 'projects/debian-cloud/global/images/family/debian-9'
+        state: present
+        project_id: "{{ project }}"
+        credentials_file: "{{ service_account_file }}"
+        service_account_email: "{{ service_account_email }}"
+        disk_size: 10
+
+
+
+db-server ansible_host=34.135.140.27 private_ip=10.128.0.6
+web-server-1 ansible_host=34.67.70.17
+web-server-2 ansible_host=34.134.124.174

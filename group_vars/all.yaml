@@ -1,0 +1,21 @@
+service_account_email: cheremisin.srgy@gmail.com
+service_account_file: /tmp/ansible-service-account.json
+project: lofty-advantage-320814
+auth_kind: serviceaccount
+scopes:
+  - https://www.googleapis.com/auth/compute
+machine_type: n1-standard-1
+image: debian-9
+region: us-central1
+zone: us-central1-a
+web_instances:
+  - web-server-1
+  - web-server-2
+db_instances:
+  - db-server
+
+ansible_ssh_private_key_file: ~/.ssh/google_compute_engine
+ansible_user: cheremisin.srgy
+db_name: employee_db
+db_user: db_user
+db_password: Passw0rd

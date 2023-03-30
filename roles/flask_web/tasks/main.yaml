@@ -1,0 +1,20 @@
+    - name: Install Python Flask dependencies
+      pip:
+        extra_args: --upgrade
+        executable: pip3
+        name: '{{ item }}'
+      with_items:
+       - flask
+       - flask-mysql
+
+    - name: Download web-server code
+      git:
+        repo: https://github.com/mmumshad/simple-webapp.git
+        dest: /opt/simple-webapp
+
+    - name: Debug
+      debug: 
+        msg: MYSQL_DATABASE_HOST={{ hostvars['db-server']['private_ip'] }} FLASK_APP=/opt/app.py nohup flask run --host=0.0.0.0 --port=80 &
+
+    - name: Start web-application
+      shell: MYSQL_DATABASE_HOST={{ hostvars['db-server']['private_ip'] }} FLASK_APP=/opt/app.py nohup flask run --host=0.0.0.0 --port=80 &

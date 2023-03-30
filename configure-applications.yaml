@@ -1,0 +1,22 @@
+- name: Configure and install mysql database
+  hosts: db_servers
+  become: yes
+  become_method: sudo
+  roles:
+    - python
+    - mysql_db
+
+
+- name: Configure and install web db-server
+  hosts: web_servers
+  become: yes
+  become_method: sudo
+  roles:
+   - python
+   - flask_web
+
+
+
+# - name: Configure applications
+#   hosts: localhost
+#   tasks: 

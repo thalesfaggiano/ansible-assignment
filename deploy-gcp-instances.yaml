@@ -1,0 +1,30 @@
+- name: Create IP address
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+     - include: tasks/web.yaml
+       register: web_deploy_result
+
+     - include: tasks/db.yaml
+       with_items: "{{ db_instances }}"
+       register: db_deploy_result
+
+     - name: Add web-server-1 to dynamic in-memory inventory
+       add_host: 
+        hostname: "{{ web_server_one_result.networkInterfaces[0].networkIP }}"
+        private_ip: "{{ web_server_one_result.networkInterfaces[0].accessConfigs[0].natIP }}"
+        group_name: web_servers
+
+     - name: Add web-server-1 to dynamic in-memory inventory
+       add_host: 
+        hostname: "{{ web_server_two_result.networkInterfaces[0].networkIP }}"
+        private_ip: "{{ web_server_two_result.networkInterfaces[0].accessConfigs[0].natIP }}"
+        group_name: web_servers
+
+     - name: Add web-server-1 to dynamic in-memory inventory
+       add_host: 
+        hostname: "{{ db_server_result.networkInterfaces[0].networkIP }}"
+        private_ip: "{{ db_server_result.networkInterfaces[0].accessConfigs[0].natIP }}"
+        group_name: db_servers
+
